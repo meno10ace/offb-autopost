@@ -185,7 +185,8 @@ def upload_to_imgbb(image_path):
                 data = res.json()["data"]
                 # 直リンクを取得
                 public_url = data.get("image", {}).get("url") or data.get("display_url")
-                
+                return public_url
+            
                 if public_url:
                     # 📢 Meta対策：URLの末尾にダミーの引数を付けて、強引に画像と認識させる
                     # これにより、Metaの「画像じゃないかも？」という疑いを回避します
