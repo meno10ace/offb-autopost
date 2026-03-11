@@ -252,27 +252,44 @@ def post_to_instagram(image_url):
 
 # --- main.py の一番下、メイン処理の部分を修正 ---
 
-if __name__ == '__main__':
-    print("="*40)
-    print("🤖 ジム自動投稿エージェント 起動")
-    print("="*40)
+# if __name__ == '__main__':
+#     print("="*40)
+#     print("🤖 ジム自動投稿エージェント 起動")
+#     print("="*40)
     
-    classes_data = get_todays_classes()
-    print(f"取得したクラス数: {len(classes_data)}件")
+#     classes_data = get_todays_classes()
+#     print(f"取得したクラス数: {len(classes_data)}件")
     
-    image_filename = 'final_stories.png'
-    if generate_gym_stories_image(classes_data, image_filename):
-        # 3. 画像をURL化
-        public_image_url = upload_to_imgbb(image_filename)
+#     image_filename = 'final_stories.png'
+#     if generate_gym_stories_image(classes_data, image_filename):
+#         # 3. 画像をURL化
+#         public_image_url = upload_to_imgbb(image_filename)
         
-        if public_image_url:
-            # 📢 ここがポイント！
-            # ImgBBのURLが安定するまで少し待つ（Metaの「ダウンロード失敗」を防ぐ）
-            print("⏳ Metaのチェックをパスするために10秒待機します...")
-            time.sleep(30) 
+#         if public_image_url:
+#             # 📢 ここがポイント！
+#             # ImgBBのURLが安定するまで少し待つ（Metaの「ダウンロード失敗」を防ぐ）
+#             print("⏳ Metaのチェックをパスするために10秒待機します...")
+#             time.sleep(30) 
             
-            # 4. Instagramへ投稿
-            post_to_instagram(public_image_url)
+#             # 4. Instagramへ投稿
+#             post_to_instagram(public_image_url)
             
-    print("="*40)
-    print("🏁 すべての処理が完了しました！")
+#     print("="*40)
+#     print("🏁 すべての処理が完了しました！")
+
+# --- main.py の一番下（メイン実行部分） ---
+
+if __name__ == '__main__':
+    # 1. カレンダーから予定を取得
+    classes = get_todays_classes()
+    
+    # 2. 画像を生成 (final_stories.png が作られます)
+    generate_gym_stories_image(classes)
+    
+    # 3. 【ここが重要】ImgBBは使わず、あらかじめGitHubに上げてある画像のURLを渡す
+    # 先ほどGitHubにテスト画像を上げましたよね？そのRaw URLをここに貼ってください。
+    # 例: 'https://raw.githubusercontent.com/ユーザー名/リポジトリ名/main/test_photo.jpg'
+    final_url = 'https://raw.githubusercontent.com/meno10ace/offb-autopost/main/final_stories.png'
+    
+    print(f"📢 GitHubのURLで本番投稿を開始します: {final_url}")
+    post_to_instagram(final_url)
