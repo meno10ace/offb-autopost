@@ -182,14 +182,20 @@ def upload_to_imgbb(image_path):
             res = requests.post("https://api.imgbb.com/1/upload", payload)
             
             if res.status_code == 200:
-                # 📢 ここが重要！ "url" ではなく "display_url" または "image.url" を使います
                 data = res.json()["data"]
-                # 直リンク（拡張子付き）を優先的に取得
+                # 直リンクを取得
                 public_url = data.get("image", {}).get("url") or data.get("display_url")
                 
                 if public_url:
-                    print(f"✅ 直リンク取得成功: {public_url}")
-                    return public_url
+                    # 📢 Meta対策：URLの末尾にダミーの引数を付けて、強引に画像と認識させる
+                    # これにより、Metaの「画像じゃないかも？」という疑いを回避します
+                    if "?" in public_url:
+                        final_url = f"{public_url}&format=jpg&ignore=.jpg"
+                    else:
+                        final_url = f"{public_url}?format=jpg&ignore=.jpg"
+                        
+                    print(f"✅ Meta対策済みURL取得: {final_url}")
+                    return final_url
                 else:
                     print("❌ 画像の直リンクが見つかりませんでした")
                     return None
