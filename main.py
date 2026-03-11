@@ -206,49 +206,57 @@ def upload_to_imgbb(image_path):
         print(f"❌ 画像読み込みエラー: {e}")
         return None
 
-# --- 5. Instagramへ投稿する関数 ---
+# --- 5. Instagram投稿（成功スクリプトの完全移植版） ---
 def post_to_instagram(image_url):
-    print("🚀 Instagramへの投稿プロセスを開始します...")
+    print(f"🚀 Instagram送信開始 URL: {image_url}")
     
-    # 投稿のキャプション（文章）を生成
-    now = datetime.datetime.now()
-    caption = f"【本日のスケジュール】\n{now.month}月{now.day}日のクラス予定です🥊\n本日もよろしくお願いします！\n\n#OmuraFightFitBase #大村市 #キックボクシング"
-
-    print("📸 1/2: Instagramサーバーへデータを送信中...")
+    # 📢 成功した test_insta.py と同じ変数名・同じ構造にします
     container_url = f"https://graph.facebook.com/v25.0/{IG_ACCOUNT_ID}/media"
     container_payload = {
         'image_url': image_url,
-        'caption': caption,
+        'media_type': 'STORIES', # ストーリーズにしたい場合はこれ
         'access_token': IG_ACCESS_TOKEN
     }
     
+    # 📢 成功コードと同じく data= で送信
     response = requests.post(container_url, data=container_payload)
     result = response.json()
     
     if 'id' not in result:
-        print("❌ データの送信失敗:", result)
+        print(f"❌ Step 1 失敗: {result}")
         return
         
     creation_id = result['id']
-    print(f"✅ 送信完了！ (処理ID: {creation_id})")
-    
-    # Instagram側での画像処理を待つ
-    time.sleep(8) 
+    print(f"✅ 受理完了 (ID: {creation_id})。15秒待ちます...")
+    time.sleep(15) 
 
-    print("📢 2/2: フィードへ公開中...")
+    # --- Step 2: 投稿の公開 ---
     publish_url = f"https://graph.facebook.com/v25.0/{IG_ACCOUNT_ID}/media_publish"
     publish_payload = {
         'creation_id': creation_id,
         'access_token': IG_ACCESS_TOKEN
     }
     
-    publish_response = requests.post(publish_url, data=publish_payload)
-    publish_result = publish_response.json()
+    publish_result = requests.post(publish_url, data=publish_payload).json()
     
     if 'id' in publish_result:
-        print(f"🎉🎉🎉 大成功！！！ 今日のスケジュールがInstagramに投稿されました！ (投稿ID: {publish_result['id']})")
+        print(f"🎉🎉🎉 大成功！！！ 今度こそ投稿されました！")
     else:
-        print("❌ 公開失敗:", publish_result)
+        print(f"❌ Step 2 失敗: {publish_result}")
+
+# --- メイン実行部分 ---
+if __name__ == '__main__':
+    # 画像生成までは今まで通り
+    classes = get_todays_classes()
+    # 2. 画像を生成 (final_stories.png が作られます)
+    # generate_gym_stories_image(classes)
+    # 📢 今は ImgBB は一旦お休みしましょう。
+    # 確実に成功させるために「猫のURL」か、
+    # もし勇気があれば「GitHubのRaw URL」で勝負してください！
+    
+    target_url = 'https://raw.githubusercontent.com/meno10ace/offb-autopost/main/final_stories.png'
+    
+    post_to_instagram(target_url)
 
 # --- main.py の一番下、メイン処理の部分を修正 ---
 
@@ -279,17 +287,17 @@ def post_to_instagram(image_url):
 
 # --- main.py の一番下（メイン実行部分） ---
 
-if __name__ == '__main__':
-    # 1. カレンダーから予定を取得
-    classes = get_todays_classes()
+# if __name__ == '__main__':
+#     # 1. カレンダーから予定を取得
+#     classes = get_todays_classes()
     
-    # 2. 画像を生成 (final_stories.png が作られます)
-    generate_gym_stories_image(classes)
+#     # 2. 画像を生成 (final_stories.png が作られます)
+#     generate_gym_stories_image(classes)
     
-    # 3. 【ここが重要】ImgBBは使わず、あらかじめGitHubに上げてある画像のURLを渡す
-    # 先ほどGitHubにテスト画像を上げましたよね？そのRaw URLをここに貼ってください。
-    # 例: 'https://raw.githubusercontent.com/ユーザー名/リポジトリ名/main/test_photo.jpg'
-    final_url = 'https://raw.githubusercontent.com/meno10ace/offb-autopost/main/final_stories.png'
+#     # 3. 【ここが重要】ImgBBは使わず、あらかじめGitHubに上げてある画像のURLを渡す
+#     # 先ほどGitHubにテスト画像を上げましたよね？そのRaw URLをここに貼ってください。
+#     # 例: 'https://raw.githubusercontent.com/ユーザー名/リポジトリ名/main/test_photo.jpg'
+#     final_url = 'https://raw.githubusercontent.com/meno10ace/offb-autopost/main/final_stories.png'
     
-    print(f"📢 GitHubのURLで本番投稿を開始します: {final_url}")
-    post_to_instagram(final_url)
+#     print(f"📢 GitHubのURLで本番投稿を開始します: {final_url}")
+#     post_to_instagram(final_url)
