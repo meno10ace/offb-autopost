@@ -244,19 +244,46 @@ def post_to_instagram(image_url):
     else:
         print(f"❌ Step 2 失敗: {publish_result}")
 
-# --- メイン実行部分 ---
+
+
 if __name__ == '__main__':
-    # 画像生成までは今まで通り
-    classes = get_todays_classes()
-    # 2. 画像を生成 (final_stories.png が作られます)
-    # generate_gym_stories_image(classes)
-    # 📢 今は ImgBB は一旦お休みしましょう。
-    # 確実に成功させるために「猫のURL」か、
-    # もし勇気があれば「GitHubのRaw URL」で勝負してください！
+    print("="*40)
+    print("🤖 ジム自動投稿エージェント 起動")
+    print("="*40)
     
-    target_url = 'https://raw.githubusercontent.com/meno10ace/offb-autopost/main/final_stories.png'
+    classes_data = get_todays_classes()
+    print(f"取得したクラス数: {len(classes_data)}件")
     
-    post_to_instagram(target_url)
+    image_filename = 'final_stories.png'
+    if generate_gym_stories_image(classes_data, image_filename):
+        # 3. 画像をURL化
+        public_image_url = upload_to_imgbb(image_filename)
+        
+        if public_image_url:
+            # 📢 ここがポイント！
+            # ImgBBのURLが安定するまで少し待つ（Metaの「ダウンロード失敗」を防ぐ）
+            print("⏳ Metaのチェックをパスするために10秒待機します...")
+            time.sleep(30) 
+            
+            # 4. Instagramへ投稿
+            post_to_instagram(public_image_url)
+            
+    print("="*40)
+    print("🏁 すべての処理が完了しました！")
+
+# --- メイン実行部分 ---
+# if __name__ == '__main__':
+#     # 画像生成までは今まで通り
+#     classes = get_todays_classes()
+#     # 2. 画像を生成 (final_stories.png が作られます)
+#     generate_gym_stories_image(classes)
+#     # 📢 今は ImgBB は一旦お休みしましょう。
+#     # 確実に成功させるために「猫のURL」か、
+#     # もし勇気があれば「GitHubのRaw URL」で勝負してください！
+    
+#     target_url = 'https://raw.githubusercontent.com/meno10ace/offb-autopost/main/final_stories.png'
+    
+#     post_to_instagram(target_url)
 
 # --- main.py の一番下、メイン処理の部分を修正 ---
 
