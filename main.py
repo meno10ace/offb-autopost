@@ -177,14 +177,22 @@ def upload_to_imgbb(image_path):
             payload = {
                 "key": IMGBB_API_KEY,
                 "image": base64.b64encode(file.read()),
-                "expiration": 600 # 10分で自動消去されるエコ設定
+                "expiration": 600
             }
             res = requests.post("https://api.imgbb.com/1/upload", payload)
             
             if res.status_code == 200:
-                url = res.json()["data"]["url"]
-                print(f"✅ URL化成功: {url}")
-                return url
+                # 📢 ここが重要！ "url" ではなく "display_url" または "image.url" を使います
+                data = res.json()["data"]
+                # 直リンク（拡張子付き）を優先的に取得
+                public_url = data.get("image", {}).get("url") or data.get("display_url")
+                
+                if public_url:
+                    print(f"✅ 直リンク取得成功: {public_url}")
+                    return public_url
+                else:
+                    print("❌ 画像の直リンクが見つかりませんでした")
+                    return None
             else:
                 print("❌ ImgBBアップロード失敗:", res.text)
                 return None
