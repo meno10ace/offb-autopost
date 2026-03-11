@@ -23,11 +23,6 @@ IMGBB_API_KEY = os.getenv('IMGBB_API_KEY')
 if not all([CALENDAR_ID, IG_ACCESS_TOKEN, IG_ACCOUNT_ID, IMGBB_API_KEY]):
     print("❌ エラー: 必要な環境変数が設定されていません！")
     exit()
-# Instagram & ImgBB 設定
-# ⚠️ 本番運用時はこれらのキーも .env ファイルに隠すことをおすすめします！
-IG_ACCESS_TOKEN = 'EAAcZAChsJaa8BQyzMdWZBxYNX5jpFp1KeSLJrJwnP78lZBjNdrqZBZBgdqjVDDPCessia3N0LmLSbTZBVkYW9juqtrkQavUiFnnBNU5b6jtC6P3GN6deFkq9Rs3Fm3Wzm8vFu1uipPeTePXeClQkEfoUgUo8dHZC3ZCPlj1lrjfie6HIcpMQKUgoNEievJBZCrZA0f6QdC1QawadZBVV1fHU8v4rOFVj1JeYgZBzFwVhYwQfx3cbZAs8ZCCmWu7zeVCQvM05Xa3XLAAtsKDIlc'
-IG_ACCOUNT_ID = '17841471455745641'
-IMGBB_API_KEY = 'ここにImgBBのAPIキーを貼り付けてください' # ★ImgBBのサイトで取得したキーを貼ってください
 
 # --- 2. カレンダーから今日の予定を取得する関数 ---
 def get_todays_classes():
