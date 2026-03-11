@@ -33,13 +33,16 @@ jobs:
       - name: Create credentials.json
         run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" > credentials.json
 
-      # 5. 【画像生成フェーズ】最新のスケジュール画像を作る
+      # 5. 【画像生成フェーズ】
       - name: Generate Schedule Image
         env:
           CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
+          # 👇 ここが足りなかったため「環境変数がありません」エラーが出ていました
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
         run: python main.py generate
 
-      # 6. 【保存フェーズ】生成した画像をGitHubにPushしてURLを最新にする
+      # 6. 【保存フェーズ】（ここはそのまま）
       - name: Commit and Push Image
         run: |
           git config --local user.email "action@github.com"
@@ -48,12 +51,11 @@ jobs:
           git commit -m "Update today's schedule image [skip ci]" || echo "No changes to commit"
           git push
 
-      # 7. 【投稿フェーズ】GitHubのURLが更新されたのを見計らってInstagramへ投稿
+      # 7. 【投稿フェーズ】
       - name: Post to Instagram
         env:
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
         run: |
-          # Push直後だとRaw URLの反映にラグがある場合があるため15秒待機
           sleep 15
           python main.py post
