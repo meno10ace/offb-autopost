@@ -1,42 +1,59 @@
-name: Daily Instagram Post
+name: Daily Instagram Stories Post
 
 on:
   schedule:
-    # 毎日日本時間の朝（例：23:00 UTC = 8:00 JST）に実行
+    # 毎日日本時間の朝8:00（UTC 23:00）に自動実行
     - cron: '0 23 * * *'
-  workflow_dispatch: # 手動実行ボタン
+  workflow_dispatch: # 手動で「Run workflow」ボタンからも実行可能
 
 jobs:
-  build:
+  build_and_post:
     runs-on: ubuntu-latest
+    # Git Pushを許可するために書き込み権限を与える
+    permissions:
+      contents: write
+
     steps:
+      # 1. リポジトリのコードを取得
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2. Pythonのセットアップ
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
+      # 3. 必要なライブラリのインストール
       - name: Install dependencies
         run: |
           pip install google-api-python-client google-auth Pillow requests python-dotenv
 
+      # 4. Googleカレンダー認証ファイルの作成
       - name: Create credentials.json
         run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" > credentials.json
 
-      - name: Run script
+      # 5. 【画像生成フェーズ】最新のスケジュール画像を作る
+      - name: Generate Schedule Image
         env:
           CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
-          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-          IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
-        run: python main.py
+        run: python main.py generate
 
-      # ✨ ここがポイント！生成された画像をリポジトリに保存する
-      - name: Commit and Push final_stories.png
+      # 6. 【保存フェーズ】生成した画像をGitHubにPushしてURLを最新にする
+      - name: Commit and Push Image
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add final_stories.png
-          git commit -m "Update today's schedule image" || echo "No changes to commit"
+          git commit -m "Update today's schedule image [skip ci]" || echo "No changes to commit"
           git push
+
+      # 7. 【投稿フェーズ】GitHubのURLが更新されたのを見計らってInstagramへ投稿
+      - name: Post to Instagram
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
+        run: |
+          # Push直後だとRaw URLの反映にラグがある場合があるため15秒待機
+          sleep 15
+          python main.py post
