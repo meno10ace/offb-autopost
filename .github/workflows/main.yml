@@ -1,40 +1,42 @@
-name: Daily Instagram Auto Post
+name: Daily Instagram Post
 
 on:
   schedule:
-    # 毎日 朝8:00 JST (UTCでは前日の 23:00) に実行します
-    # ※時間は自由に変更できます。時間は「UTC（日本時間マイナス9時間）」で書きます。
+    # 毎日日本時間の朝（例：23:00 UTC = 8:00 JST）に実行
     - cron: '0 23 * * *'
-  workflow_dispatch: # 手動で「今すぐ実行」できるボタンを表示する設定
+  workflow_dispatch: # 手動実行ボタン
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.9'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install google-api-python-client google-auth Pillow requests python-dotenv
 
       - name: Create credentials.json
-        # 金庫に入れたJSONのテキストから、実行用の credentials.json ファイルを生成します
-        run: |
-          echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > credentials.json
+        run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" > credentials.json
 
-      - name: Run main script
-        # 金庫から環境変数を呼び出して、main.py に渡します
+      - name: Run script
         env:
           CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
-          CREDENTIALS_FILE: 'credentials.json'
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
-          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
         run: python main.py
+
+      # ✨ ここがポイント！生成された画像をリポジトリに保存する
+      - name: Commit and Push final_stories.png
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add final_stories.png
+          git commit -m "Update today's schedule image" || echo "No changes to commit"
+          git push
