@@ -25,53 +25,111 @@ def get_todays_classes():
         
         return [{'time': f"{e['start']['dateTime'][11:16]} - {e['end']['dateTime'][11:16]}",
                  'name': e.get('summary', ''),
-                 'comment': e.get('description', '').strip().split('\n')[0]} 
+                 'comment': e.get('description', '').strip()} 
                 for e in events if 'dateTime' in e['start']]
     except Exception as e:
         print(f"❌ 取得失敗: {e}")
         return []
 
 
-# --- 3. 画像生成関数 ---
+# --- 3. 画像を生成する関数 ---
 def generate_image(today_classes, output_path='final_stories.png'):
+    print("🎨 スケジュール画像を生成しています...")
     canvas_size = (1080, 1920)
     base_image_path = 'base_image.jpg' 
-    font_path = 'font.ttf' 
-    black, white, red = (0, 0, 0, 255), (255, 255, 255, 255), (220, 0, 0, 255)
+    font_path = 'font.ttf'             
+    
+    black = (0, 0, 0, 255)
+    white = (255, 255, 255, 255)
+    red = (220, 0, 0, 255)
 
     if os.path.exists(base_image_path):
-        bg_image = Image.open(base_image_path).convert('RGBA').resize(canvas_size, Image.Resampling.LANCZOS)
+        bg_image = Image.open(base_image_path).convert('RGBA')
+        bg_image = bg_image.resize(canvas_size, Image.Resampling.LANCZOS)
     else:
         bg_image = Image.new('RGBA', canvas_size, white)
-    
+
     draw = ImageDraw.Draw(bg_image)
-    
+
     try:
         font_day = ImageFont.truetype(font_path, 200)
         font_date = ImageFont.truetype(font_path, 60)
-        font_class_name = ImageFont.truetype(font_path, 90)
-        font_class_time = ImageFont.truetype(font_path, 65)
-        font_comment = ImageFont.truetype(font_path, 50)
-    except:
-        print("⚠️ フォント読み込み失敗。デフォルトを使用します。")
-        font_day = font_date = font_class_name = ImageFont.load_default()
+        font_greeting = ImageFont.truetype(font_path, 55)
+        font_class_name = ImageFont.truetype(font_path, 90) 
+        font_class_time = ImageFont.truetype(font_path, 65) 
+        font_comment = ImageFont.truetype(font_path, 50)  
+        font_footer = ImageFont.truetype(font_path, 80)
+    except IOError:
+        print(f"❌ Error: Font file not found at {font_path}")
+        return False
 
     now = datetime.datetime.now()
     day_str = now.strftime("%A")
-    draw.text(((canvas_size[0] - draw.textlength(day_str, font=font_day)) / 2, 80), day_str, font=font_day, fill=black)
+    w_day = draw.textlength(day_str, font=font_day)
+    draw.text(((canvas_size[0] - w_day) / 2, 80), day_str, font=font_day, fill=black)
 
-    y_offset = 550
-    for cls in today_classes:
-        draw.text((150, y_offset), cls['name'], font=font_class_name, fill=black)
-        draw.text((150, y_offset + 85), cls['time'].replace("-", "〜"), font=font_class_time, fill=black)
-        if cls['comment']:
-            draw.text((150, y_offset + 155), f"※{cls['comment']}", font=font_comment, fill=red)
-            y_offset += 240
-        else:
-            y_offset += 200
+    date_str = f"{now.month}/{now.day}"
+    w_date = draw.textlength(date_str, font=font_date)
+    x_date = (canvas_size[0] - w_date) / 2
+    y_date = 330
+    draw.rounded_rectangle([x_date - 20, y_date - 10, x_date + w_date + 20, y_date + 70], radius=10, fill=black)
+    draw.text((x_date, y_date), date_str, font=font_date, fill=white)
 
-    bg_image.convert('RGB').save(output_path, quality=95)
+    greeting_str = "本日も宜しくお願い致します"
+    w_greet = draw.textlength(greeting_str, font=font_greeting)
+    x_greet = (canvas_size[0] - w_greet) / 2
+    y_greet = 420
+    draw.rounded_rectangle([x_greet - 30, y_greet - 10, x_greet + w_greet + 30, y_greet + 70], radius=10, fill=black)
+    draw.text((x_greet, y_greet), greeting_str, font=font_greeting, fill=white)
+
+    start_y = 550  
+    y_offset = start_y
+    
+    if not today_classes:
+        msg = "本日のクラスはありません"
+        w = draw.textlength(msg, font=font_class_name)
+        draw.text(((canvas_size[0] - w) / 2, y_offset + 200), msg, font=font_class_name, fill=black)
+    else:
+        max_overall_width = 0
+        for cls in today_classes:
+            name_str = cls['name']
+            time_str = cls['time'].replace("-", "〜")
+            w_name = draw.textlength(name_str, font=font_class_name)
+            w_time = draw.textlength(time_str, font=font_class_time)
+            w_comment = 0
+            if cls.get('comment'):
+                comment_str = f"※{cls['comment']}"
+                # 改行で分けて、一番長い行の横幅を採用する
+                w_comment = max(draw.textlength(line, font=font_comment) for line in comment_str.split('\n'))
+            max_overall_width = max(max_overall_width, w_name, w_time, w_comment)
+        
+        global_x_start = (canvas_size[0] - max_overall_width) / 2
+
+        for cls in today_classes:
+            name_str = cls['name']
+            time_str = cls['time'].replace("-", "〜")
+            draw.text((global_x_start, y_offset), name_str, font=font_class_name, fill=black)
+            draw.text((global_x_start, y_offset + 85), time_str, font=font_class_time, fill=black)
+            
+            step_y = 200 
+            if cls.get('comment'):
+                comment_str = f"※{cls['comment']}"
+                draw.text((global_x_start, y_offset + 155), comment_str, font=font_comment, fill=red)
+                
+                # 改行(\n)の数を数えて、1行増えるごとに間隔を60px広げる
+                line_count = cls['comment'].count('\n')
+                step_y = 240 + (line_count * 60)
+                
+            y_offset += step_y
+
+    footer_str = "Omura Fight/Fit Base"
+    w_foot = draw.textlength(footer_str, font=font_footer)
+    draw.text(((canvas_size[0] - w_foot) / 2, canvas_size[1] - 180), footer_str, font=font_footer, fill=black)
+
+    final_img = bg_image.convert('RGB')
+    final_img.save(output_path, quality=95)
     print(f"✅ 画像生成完了: {output_path}")
+    
 
 # def generate_image(classes):
 #     print("🎨 画像生成中...")
