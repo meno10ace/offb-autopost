@@ -2,7 +2,8 @@ name: Daily Auto Post
 
 on:
   schedule:
-    - cron: '0 23 * * *' # 毎朝8時
+    # 日本時間の13:00（UTCの04:00）に自動実行
+    - cron: '0 4 * * *'
   workflow_dispatch:
 
 jobs:
@@ -47,4 +48,5 @@ jobs:
           IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
         run: |
           sleep 10 # URLが安定するまで少し待つ
+
           python post.py
