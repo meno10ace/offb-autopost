@@ -1,61 +1,48 @@
-name: Daily Instagram Stories Post
+name: Daily Auto Post
 
 on:
   schedule:
-    # 毎日日本時間の朝8:00（UTC 23:00）に自動実行
-    - cron: '0 23 * * *'
-  workflow_dispatch: # 手動で「Run workflow」ボタンからも実行可能
+    - cron: '0 23 * * *' # 毎朝8時
+  workflow_dispatch:
 
 jobs:
-  build_and_post:
+  run_bot:
     runs-on: ubuntu-latest
-    # Git Pushを許可するために書き込み権限を与える
     permissions:
-      contents: write
+      contents: write # Git Pushするための権限
 
     steps:
-      # 1. リポジトリのコードを取得
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      # 2. Pythonのセットアップ
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # 3. 必要なライブラリのインストール
-      - name: Install dependencies
-        run: |
-          pip install google-api-python-client google-auth Pillow requests python-dotenv
+      - name: Install Libs
+        run: pip install google-api-python-client google-auth Pillow requests python-dotenv
 
-      # 4. Googleカレンダー認証ファイルの作成
       - name: Create credentials.json
         run: echo "${{ secrets.GOOGLE_CREDENTIALS_JSON }}" > credentials.json
 
-      # 5. 【画像生成フェーズ】
-      - name: Generate Schedule Image
+      # ① 画像を作る（必要なのはカレンダーの情報だけ）
+      - name: 1. Generate Image
         env:
           CALENDAR_ID: ${{ secrets.CALENDAR_ID }}
-          # 👇 ここが足りなかったため「環境変数がありません」エラーが出ていました
-          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-          IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
-        run: python main.py generate
+        run: python generate.py
 
-      # 6. 【保存フェーズ】（ここはそのまま）
-      - name: Commit and Push Image
+      # ② 画像をリポジトリに上書き保存する
+      - name: 2. Save Image to GitHub
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add final_stories.png
-          git commit -m "Update today's schedule image [skip ci]" || echo "No changes to commit"
+          git commit -m "Update today's image" || echo "No changes"
           git push
 
-      # 7. 【投稿フェーズ】
-      - name: Post to Instagram
+      # ③ 投稿する（必要なのはInstagramの情報だけ）
+      - name: 3. Post to Instagram
         env:
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IG_ACCOUNT_ID: ${{ secrets.IG_ACCOUNT_ID }}
         run: |
-          sleep 15
-          python main.py post
+          sleep 10 # URLが安定するまで少し待つ
+          python post.py
