@@ -3,7 +3,7 @@ name: Daily Auto Post
 on:
   schedule:
     # 日本時間の13:00（UTCの04:00）に自動実行
-    - cron: '0 4 * * *'
+    - cron: '13 4 * * *'
   workflow_dispatch:
 
 jobs:
@@ -50,3 +50,4 @@ jobs:
           sleep 10 # URLが安定するまで少し待つ
 
           python post.py
+
