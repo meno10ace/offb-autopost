@@ -108,9 +108,35 @@ def generate_image(today_classes, output_path='final_stories.png'):
         for cls in today_classes:
             name_str = cls['name']
             time_str = cls['time'].replace("-", "〜")
-            draw.text((global_x_start, y_offset), name_str, font=font_class_name, fill=black)
-            draw.text((global_x_start, y_offset + 85), time_str, font=font_class_time, fill=black)
             
+            # --- 🌟ここから追加：休み判定と色の設定 ---
+            is_canceled = False
+            if cls.get('comment') and '休み' in cls['comment']:
+                is_canceled = True
+
+            gray = (150, 150, 150, 255)
+            text_color = gray if is_canceled else black
+            # ------------------------------------------
+
+            # 1. クラス名を描画（色は text_color で自動切り替え）
+            draw.text((global_x_start, y_offset), name_str, font=font_class_name, fill=text_color)
+            
+            # 🌟追加：クラス名の二重取り消し線
+            if is_canceled:
+                w_name = draw.textlength(name_str, font=font_class_name)
+                draw.line([(global_x_start, y_offset + 45), (global_x_start + w_name, y_offset + 45)], fill=text_color, width=3)
+                draw.line([(global_x_start, y_offset + 55), (global_x_start + w_name, y_offset + 55)], fill=text_color, width=3)
+
+            # 2. 時間を描画
+            draw.text((global_x_start, y_offset + 85), time_str, font=font_class_time, fill=text_color)
+            
+            # 🌟追加：時間の二重取り消し線
+            if is_canceled:
+                w_time = draw.textlength(time_str, font=font_class_time)
+                draw.line([(global_x_start, y_offset + 120), (global_x_start + w_time, y_offset + 120)], fill=text_color, width=3)
+                draw.line([(global_x_start, y_offset + 130), (global_x_start + w_time, y_offset + 130)], fill=text_color, width=3)
+
+            # 3. コメントと間隔の計算（ここは変更なし）
             step_y = 200 
             if cls.get('comment'):
                 comment_str = f"※{cls['comment']}"
