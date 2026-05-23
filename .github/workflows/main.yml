@@ -1,10 +1,9 @@
 name: Daily Auto Post
 
 on:
-  schedule:
-    # 日本時間の13:00（UTCの04:00）に自動実行
-    - cron: '13 4 * * *'
   workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-autopost]
 
 jobs:
   run_bot:
